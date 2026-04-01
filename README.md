@@ -27,6 +27,41 @@ Run d2k inside your cluster. It exposes the Docker Engine API on port 2375 and t
 
 ---
 
+## Deployment
+
+d2k runs inside the target cluster namespace using a ServiceAccount with a namespace-scoped Role. It has no cluster-wide permissions (except the optional metrics API, which requires a ClusterRole if metrics-server is installed cluster-wide).
+
+Two deployment manifests are provided under `deploy/`:
+
+| Manifest | Service type | When to use |
+|---|---|---|
+| `deploy/kubernetes-lb.yaml` | LoadBalancer | Cluster has a load balancer (cloud, MetalLB, etc.) |
+| `deploy/kubernetes-nodeport.yaml` | NodePort (30275) | No load balancer, or you want to reach d2k via `<node-ip>:30275` |
+
+```bash
+# Edit the manifest to set your target namespace, then:
+kubectl apply -f deploy/kubernetes-lb.yaml
+# or
+kubectl apply -f deploy/kubernetes-nodeport.yaml
+```
+
+Connect Portainer or the Docker CLI to the d2k Service:
+
+```bash
+# Docker CLI context (LoadBalancer)
+docker context create d2k \
+  --docker "host=tcp://d2k.d2k.svc.cluster.local:2375"
+
+# Docker CLI context (NodePort — use any node IP)
+docker context create d2k \
+  --docker "host=tcp://<node-ip>:30275"
+
+docker --context d2k ps
+docker --context d2k run -d --name myapp -p 80:8080 nginx
+```
+
+---
+
 ## Port mapping rules
 
 No `-p` flag means no Service is created. `-P` (publish all) creates a NodePort Service. Explicit `-p host:container` creates a LoadBalancer Service.
@@ -81,28 +116,6 @@ Bind mounts (`-v /host/path:/container/path`) are not supported. Named volume mo
 | PVC deleted | volume destroy |
 | Service created | network connect |
 | Service deleted | network disconnect |
-
----
-
-## Deployment
-
-d2k runs inside the target cluster namespace using a ServiceAccount with a namespace-scoped Role. It has no cluster-wide permissions (except the optional metrics API, which requires a ClusterRole if metrics-server is installed cluster-wide).
-
-```bash
-# Edit deploy/kubernetes.yaml to set your target namespace, then:
-kubectl apply -f deploy/kubernetes.yaml
-```
-
-Connect Portainer or the Docker CLI to the d2k Service:
-
-```bash
-# Docker CLI context
-docker context create d2k \
-  --docker "host=tcp://d2k.d2k.svc.cluster.local:2375"
-
-docker --context d2k ps
-docker --context d2k run -d --name myapp -p 80:8080 nginx
-```
 
 ---
 
@@ -161,7 +174,7 @@ Kubernetes namespace
 
 ## RBAC
 
-d2k requires the following permissions in the target namespace. The supplied `deploy/kubernetes.yaml` includes a Role with these rules pre-configured.
+d2k requires the following permissions in the target namespace. The supplied deployment manifests under `deploy/` include a Role with these rules pre-configured.
 
 | Resource | Verbs |
 |---|---|
