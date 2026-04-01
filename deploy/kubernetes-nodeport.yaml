@@ -105,7 +105,7 @@ spec:
       serviceAccountName: d2k
       containers:
         - name: d2k
-          image: d2k:latest   # replace with your image
+          image: docker.io/portainer/d2k:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 2375
