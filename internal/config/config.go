@@ -30,4 +30,11 @@ type Config struct {
 	// instead of a NodePort Service for explicit port mappings.
 	// Provided via D2K_LOW_PORT_THRESHOLD env var, defaults to 1024.
 	LowPortThreshold int `env:"D2K_LOW_PORT_THRESHOLD,default=1024"`
+
+	// GPUResourceName is the Kubernetes device plugin resource name used when
+	// the Docker client requests GPU access (--gpus flag / DeviceRequests).
+	// Common values: "nvidia.com/gpu" (NVIDIA), "amd.com/gpu" (AMD/ROCm).
+	// When empty, GPU requests from the Docker API are silently ignored.
+	// Provided via D2K_GPU_RESOURCE_NAME env var, empty by default.
+	GPUResourceName string `env:"D2K_GPU_RESOURCE_NAME"`
 }
